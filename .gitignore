@@ -1,2 +1,7 @@
 *.csv
+stocsy_*
+plotData*
+stocsy.pyc
+*.png
+
 /__pycache__/*
