@@ -6,9 +6,10 @@
 import numpy as np
 import pandas as pd
 from scipy import stats
-import sys
+#import sys
 import matplotlib.pyplot as plt
 from copy import deepcopy
+
 
 
 def stocsy(M,ppm,dist,sig):
@@ -24,17 +25,18 @@ def stocsy(M,ppm,dist,sig):
           
     print("\n----------Cunstructing significant correlation  matrix------------")
     M=M.values
-    #output=pd.DataFrame(M)
-    #output.to_csv('CorrMatrix.csv',index=False,header=None)
+    output=pd.DataFrame(M)
+    output.to_csv('CorrMatrix.csv',index=False,header=None)
     #print(M[0])
     #print('in stocsy.stocsy before maxCorrPairs')
+
     P=maxCorrPairs(deepcopy(M),D,dist,sig,ppm)
     #print(M[0])
     #print('in stocsy.stocsy after maxCorrPairs')
     print('Number of feature pairs with significant correlation : '+\
         '{:d}'.format(P.shape[0]))
-    pseudospec=pseudospectrum(M,P)   #a list of pseusospecs each correspond to the order of pairs in P
-    return(pseudospec)
+        
+    return(M,P)
 
 def correlation(M):
     C=M.corr(method='pearson',min_periods=1)
@@ -63,19 +65,14 @@ def maxCorrPairs(CorrMat,DistMat,dist,sig,ppm):
 
     removing_similar=removing_similar>0
     #print(removing_similar)
+
     maxCorrPairMat=np.array(P)
     #print(maxCorrPairMat[:])
     #print(len(maxCorrPairMat))
+
     maxCorrPairMat=maxCorrPairMat[removing_similar]
     #print(maxCorrPairMat[:])
     #print(len(maxCorrPairMat))
     return (maxCorrPairMat)
 
-def pseudospectrum(M,P):
-    pseudospec=[]
-    #print('*****in pseudospectrum*****')
-    for i in range(len(P)):
-        v=0.5*(M[P[i][0]]+M[P[i][1]])
-        #print(v)
-        pseudospec.append(v)
-    return(pseudospec)
+

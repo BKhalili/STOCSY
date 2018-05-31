@@ -7,6 +7,18 @@ import stocsy
 import pandas as pd
 from optparse import OptionParser
 import sys
+import math
+
+def pseudospectrum(C,P,n):
+    pseudospec=[]
+    #print('*****in pseudospectrum*****')
+    for i in range(len(P)):
+        v=0.5*(C[P[i][0]]+C[P[i][1]])
+        for j in range(v.shape[0]):
+            v[j]=math.atanh(v[j])*math.sqrt(n-3)
+        pseudospec.append(v)
+    return(pseudospec)
+
 
 def main():
     print("----------Asigning parameters------------")
@@ -22,19 +34,32 @@ def main():
     print("\n----------Reading input file------------")
     D = pd.read_csv(options.infile,header=None)
     M = D.loc[1:,1:]
+    num_samples=M.shape[0]
     ppm = D.loc[0,:]
-    ppm=ppm.drop(labels=0)
-    ppm=ppm.values
+    ppm = ppm.drop(labels=0)
+    ppm = ppm.values
     #fillna(0) filling any missing element by 0
     #M = M.values
     print('data matrix loaded: '+\
               '{:d}'.format(M.shape[0])+'x'+'{:d}'.format(M.shape[1]))
 
-    pseudospectrums=stocsy.stocsy(M,ppm,options.dist,options.sig)
+    (C,P) = stocsy.stocsy(M,ppm,options.dist,options.sig)
+
+    pseudospec = pseudospectrum(C,P,num_samples)   #a list of pseusospecs each correspond to the respective pairs in P
 
     print("\n----------writing output file------------")
-    output=pd.DataFrame(pseudospectrums)
-    output.to_csv(options.outfile,index=False,header=None)
+    output=pd.DataFrame(pseudospec)
+    output=output.transpose()
+    output.insert(0,'shift',ppm)
+    headers=[]
+    for i in range(output.shape[1]):
+        if(i==0):
+            headers.append('shift')
+        else:
+            headers.append('z/C'+'{:03}'.format(i))
+    
+    output.to_csv(options.outfile,index=False,header=headers)
 
 if __name__ == '__main__':
     main()
+
