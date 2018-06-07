@@ -9,14 +9,20 @@ from optparse import OptionParser
 import sys
 import math
 
-def pseudospectrum(C,P,n):
+def pseudospectrum(M,C,P,n):
     pseudospec=[]
+    featPseudospec=[]
     #print('*****in pseudospectrum*****')
     for i in range(len(P)):
         v=0.5*(C[P[i][0]]+C[P[i][1]])
+        MT=M.transpose()
+        f=0.5*(MT[P[i][0]]+MT[P[i][1]])
+        featPseudospec.append(f)
         for j in range(v.shape[0]):
-            v[j]=math.atanh(v[j])*math.sqrt(n-3)
+            v[j]=math.atanh(v[j])
         pseudospec.append(v)
+    output=pd.DataFrame(featPseudospec)
+    output.to_csv('featPseudospec.csv')
     return(pseudospec)
 
 
@@ -44,8 +50,8 @@ def main():
               '{:d}'.format(M.shape[0])+'x'+'{:d}'.format(M.shape[1]))
 
     (C,P) = stocsy.stocsy(M,ppm,options.dist,options.sig)
-
-    pseudospec = pseudospectrum(C,P,num_samples)   #a list of pseusospecs each correspond to the respective pairs in P
+    M = M.values
+    pseudospec = pseudospectrum(M,C,P,num_samples)   #a list of pseusospecs each correspond to the respective pairs in P
 
     print("\n----------writing output file------------")
     output=pd.DataFrame(pseudospec)

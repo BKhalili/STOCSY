@@ -20,6 +20,8 @@ def stocsy(M,ppm,dist,sig):
         
     print("\n----------Computing off-diagonal distance------------")
     D=distanceMatrix(M.shape[0],ppm)
+    output=pd.DataFrame(D)
+    output.to_csv('distMatrix.csv',index=False,header=None)
     print('Correlation matrix: '+\
         '{:d}'.format(D.shape[0])+'x'+'{:d}'.format(D.shape[1]))
           
@@ -55,7 +57,6 @@ def maxCorrPairs(CorrMat,DistMat,dist,sig,ppm):
             featCorr=CorrMat[i]
             featCorr[np.invert(flag_feat)]=0     #to find the argmax among significant off-diagonal elements put to zero all the insignificant and diagonal elements of the featCorr
             P.append(np.array([i,np.argmax(featCorr)]))
-
             #print(np.array([i,np.argmax(featCorr)]))
     removing_similar=np.ones(len(P))
     for i in range(len(P)):
