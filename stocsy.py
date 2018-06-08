@@ -29,12 +29,10 @@ def stocsy(M,ppm,dist,sig):
     M=M.values
     output=pd.DataFrame(M)
     output.to_csv('CorrMatrix.csv',index=False,header=None)
-    #print(M[0])
-    #print('in stocsy.stocsy before maxCorrPairs')
 
-    P=maxCorrPairs(deepcopy(M),D,dist,sig,ppm)
-    #print(M[0])
-    #print('in stocsy.stocsy after maxCorrPairs')
+    P=maxCorrPairs(deepcopy(M),D,dist,ppm)
+    P=remove_Pairs(P,M,sig)
+
     print('Number of feature pairs with significant correlation : '+\
         '{:d}'.format(P.shape[0]))
         
@@ -49,31 +47,36 @@ def distanceMatrix(n,ppm):
     D = abs(D-np.transpose(D))
     return (D)
 
-def maxCorrPairs(CorrMat,DistMat,dist,sig,ppm):
-    P = []                  #list of pairs with max corr
-    for i in range(CorrMat.shape[0]):
-        flag_feat =np.logical_and(CorrMat[i]>sig , DistMat[i]>dist)
-        if np.any(flag_feat):   #if any of the off diagonal corrolation elements was significant
-            featCorr=CorrMat[i]
-            featCorr[np.invert(flag_feat)]=0     #to find the argmax among significant off-diagonal elements put to zero all the insignificant and diagonal elements of the featCorr
-            P.append(np.array([i,np.argmax(featCorr)]))
-            #print(np.array([i,np.argmax(featCorr)]))
-    removing_similar=np.ones(len(P))
-    for i in range(len(P)):
-        for j in range(i+1,len(P)):
+def maxCorrPairs(CorrMat,DistMat,dist,ppm):
+    P = np.zeros((CorrMat.shape[0] ,2),dtype=int)                  #list of pairs with max corr
+    flag_feat =np.logical_not(DistMat<dist)
+    CorrMat[np.invert(flag_feat)]=0
+    #output=pd.DataFrame(CorrMat)   #output.to_csv('OffdiagCorrMat.csv')
+    max_array=np.max(CorrMat,1)
+    #print(max_array)   #P=np.array(np.argmax(CorrMat,axis=0),np.arange(CorrMat.shape[0]))
+    P[:,1]=np.argmax(CorrMat,axis=0)
+    P[:,0]=range(CorrMat.shape[0])
+    #output=pd.DataFrame(P) #output.insert(0,'val',max_array)   #output.to_csv('Pairs.csv',index=False,header=None)
+    P=P[np.argsort(max_array)][:]
+    P=P[::-1][:]
+    #output=pd.DataFrame(P) #output.insert(0,'val',np.sort(max_array)[::-1])    #output.to_csv('SortedPairs.csv',index=False,header=None)
+    return (P)
+    
+def remove_Pairs(P,M,sig):    #removes repeated and unsignificant pairs
+    removing_similar=np.ones(P.shape[0])
+    for i in range(P.shape[0]):
+        if M[P[i,0]][P[i,1]]<sig:
+            removing_similar[i]=0
+        for j in range(i+1,P.shape[0]):
             if P[i][0]==P[j][1] and P[i][1]==P[j][0]:
                 removing_similar[j]=0
 
     removing_similar=removing_similar>0
-    #print(removing_similar)
 
-    maxCorrPairMat=np.array(P)
-    #print(maxCorrPairMat[:])
-    #print(len(maxCorrPairMat))
-
-    maxCorrPairMat=maxCorrPairMat[removing_similar]
-    #print(maxCorrPairMat[:])
-    #print(len(maxCorrPairMat))
-    return (maxCorrPairMat)
+    P=P[removing_similar]
+    #output=pd.DataFrame(P)
+    #output.to_csv('pairswosimilars.csv',index=False,header=None)
+ 
+    return (P)
 
 
