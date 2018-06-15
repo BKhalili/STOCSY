@@ -10,7 +10,7 @@ import numpy as np
 import sys
 import math
 
-def pseudospectrum(M,C,P,n):
+def pseudospectrum(M,C,P,n):    #M is the initial matrix with feature vectore and C is the complete correlation matrix
     pseudospec=[]
     featPseudospec=np.zeros((M.shape[0],len(P)))
     #print(featPseudospec.shape)    #print('*****in pseudospectrum*****')
@@ -50,7 +50,7 @@ def main():
     print('data matrix loaded: '+\
               '{:d}'.format(M.shape[0])+'x'+'{:d}'.format(M.shape[1]))
 
-    (C,P) = stocsy.stocsy(M,ppm,options.dist,options.sig) #Compelete correlation matrix and the pairs
+    (C,P) = stocsy.stocsy(M,ppm,options.dist,options.sig) #Complete correlation matrix and the sorted indices of leading correlated features
     M = M.values
     (pseudospec,featPseudospec) = pseudospectrum(M,C,P,num_samples)   #a list of pseusospecs each correspond to the respective pairs in P
 
@@ -65,13 +65,23 @@ def main():
         if(i==0):
             headers.append('shift')
         else:
-            headers.append('z/'+'{:05}'.format(ppm[P[i-1,0]])+','+'{:05}'.format(ppm[P[i-1,1]]))
+            headers.append('z/f'+'{:05}'.format(ppm[P[i-1,0]])+'f'+'{:05}'.format(ppm[P[i-1,1]]))
+
     fileName='stocsy_rescaledCoeff_'+'{:03}'.format(options.r)+'_CorrSig_'+'{:03}'.format(options.sig)+'.csv'
     output.to_csv(fileName,index=False,header=headers)
     output=pd.DataFrame(featPseudospec)
     del headers[0]
     headers=[x.replace('z','f') for x in headers]
-    output.to_csv('featPseudospec.csv',index=False,header=headers)
+    fileName='featPseudospec'+'_CorrSig_'+'{:03}'.format(options.sig)+'.csv'
+    output.to_csv(fileName,index=False,header=headers)
+    #---------------producing a table with f-f labels and their leading corresponding correlation
+    CorrV=np.ones((1,len(P)))
+    for i in range(len(P)):
+        CorrV[0,i]=C[P[i][0],P[i][1]]
+
+    output=pd.DataFrame(CorrV)
+    headers=[x.replace('f/','Corr/') for x in headers]
+    output.to_csv('TableOfSortedHighlyCorrFeats.csv',index=False,header=headers)
 
 if __name__ == '__main__':
     main()
