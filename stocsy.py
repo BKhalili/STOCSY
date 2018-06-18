@@ -31,7 +31,7 @@ def stocsy(M,ppm,dist,sig):
     output.to_csv('CorrMatrix.csv',index=False,header=None)
 
     P=maxCorrPairs(deepcopy(M),D,dist,ppm)
-    P=remove_Pairs(P,M,sig)
+    P=remove_Pairs(P,M,ppm,sig,dist)
 
     print('Number of feature pairs with significant correlation : '+\
         '{:d}'.format(P.shape[0]))
@@ -48,7 +48,7 @@ def distanceMatrix(n,ppm):
     return (D)
 
 def maxCorrPairs(CorrMat,DistMat,dist,ppm):
-    P = np.zeros((CorrMat.shape[0] ,2),dtype=int)                  #list of pairs with max corr
+    P = np.zeros((CorrMat.shape[0] ,2),dtype=int)                  #list of pairs indices with max corr
     flag_feat =np.logical_not(DistMat<dist)
     CorrMat[np.invert(flag_feat)]=0
     #output=pd.DataFrame(CorrMat)   #output.to_csv('OffdiagCorrMat.csv')
@@ -62,15 +62,24 @@ def maxCorrPairs(CorrMat,DistMat,dist,ppm):
     #output=pd.DataFrame(P) #output.insert(0,'val',np.sort(max_array)[::-1])    #output.to_csv('SortedPairs.csv',index=False,header=None)
     return (P)
     
-def remove_Pairs(P,M,sig):    #removes repeated and unsignificant pairs
+def remove_Pairs(P,M,ppm,sig,dist):    #removes repeated and unsignificant pairs
     removing_similar=np.ones(P.shape[0])
+    v=[]
     for i in range(P.shape[0]):
         if M[P[i,0]][P[i,1]]<sig:
             removing_similar[i]=0
         for j in range(i+1,P.shape[0]):
-            if P[i][0]==P[j][1] and P[i][1]==P[j][0]:
+            if (ppm[P[i][0]]<ppm[P[j][0]]+dist and ppm[P[i][0]]>ppm[P[j][0]]-dist and ppm[P[i][1]]<ppm[P[j][1]]+dist and ppm[P[i][1]]>ppm[P[j][1]]-dist) or (ppm[P[i][0]]<ppm[P[j][1]]+dist and ppm[P[i][0]]>ppm[P[j][1]]-dist and ppm[P[i][1]]<ppm[P[j][0]]+dist and ppm[P[i][1]]>ppm[P[j][0]]-dist):
+                v.append(np.array([ppm[P[i][0]],ppm[P[i][1]],M[P[i,0]][P[i,1]],ppm[P[j][0]],ppm[P[j][1]],M[P[j,0]][P[j,1]]]))
+                if M[P[i,0]][P[i,1]]>M[P[j,0]][P[j,1]]:
+                    removing_similar[j]=0
+                else:
+                    removing_similar[i]=0
+        
+            if (P[i][0]==P[j][1] and P[i][1]==P[j][0]): #add an or statement here for checking if any two pairs are within the dist threshold if yes the one with min correlation should be also eliminated
                 removing_similar[j]=0
-
+    output=pd.DataFrame(v)
+    output.to_csv('pairswoNeighboringSimilars.csv',index=False,header=None)
     removing_similar=removing_similar>0
 
     P=P[removing_similar]
