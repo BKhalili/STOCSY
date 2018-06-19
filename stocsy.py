@@ -51,15 +51,21 @@ def maxCorrPairs(CorrMat,DistMat,dist,ppm):
     P = np.zeros((CorrMat.shape[0] ,2),dtype=int)                  #list of pairs indices with max corr
     flag_feat =np.logical_not(DistMat<dist)
     CorrMat[np.invert(flag_feat)]=0
-    #output=pd.DataFrame(CorrMat)   #output.to_csv('OffdiagCorrMat.csv')
+    #output=pd.DataFrame(CorrMat)
+    #output.to_csv('OffdiagCorrMat.csv')
     max_array=np.max(CorrMat,1)
-    #print(max_array)   #P=np.array(np.argmax(CorrMat,axis=0),np.arange(CorrMat.shape[0]))
+    #print(max_array)
+    #P=np.array(np.argmax(CorrMat,axis=0),np.arange(CorrMat.shape[0]))
     P[:,1]=np.argmax(CorrMat,axis=0)
     P[:,0]=range(CorrMat.shape[0])
-    #output=pd.DataFrame(P) #output.insert(0,'val',max_array)   #output.to_csv('Pairs.csv',index=False,header=None)
+    #output=pd.DataFrame(P)
+    #output.insert(0,'val',max_array)
+    #output.to_csv('Pairs.csv',index=False,header=None)
     P=P[np.argsort(max_array)][:]
     P=P[::-1][:]
-    #output=pd.DataFrame(P) #output.insert(0,'val',np.sort(max_array)[::-1])    #output.to_csv('SortedPairs.csv',index=False,header=None)
+    #output=pd.DataFrame(P)
+    #output.insert(0,'val',np.sort(max_array)[::-1])
+    #output.to_csv('SortedPairs.csv',index=False,header=None)
     return (P)
     
 def remove_Pairs(P,M,ppm,sig,dist):    #removes repeated and unsignificant pairs
@@ -69,19 +75,19 @@ def remove_Pairs(P,M,ppm,sig,dist):    #removes repeated and unsignificant pairs
         if M[P[i,0]][P[i,1]]<sig:
             removing_similar[i]=0
         for j in range(i+1,P.shape[0]):
-            if (ppm[P[i][0]]<ppm[P[j][0]]+dist and ppm[P[i][0]]>ppm[P[j][0]]-dist and ppm[P[i][1]]<ppm[P[j][1]]+dist and ppm[P[i][1]]>ppm[P[j][1]]-dist) or (ppm[P[i][0]]<ppm[P[j][1]]+dist and ppm[P[i][0]]>ppm[P[j][1]]-dist and ppm[P[i][1]]<ppm[P[j][0]]+dist and ppm[P[i][1]]>ppm[P[j][0]]-dist):
-                v.append(np.array([ppm[P[i][0]],ppm[P[i][1]],M[P[i,0]][P[i,1]],ppm[P[j][0]],ppm[P[j][1]],M[P[j,0]][P[j,1]]]))
+            if (P[i][0]==P[j][1] and P[i][1]==P[j][0]): #add an or statement here for checking if any two pairs are within the dist threshold if yes the one with min correlation should be also eliminated
+                removing_similar[j]=0
+            elif (ppm[P[i][0]]<ppm[P[j][0]]+dist and ppm[P[i][0]]>ppm[P[j][0]]-dist and ppm[P[i][1]]<ppm[P[j][1]]+dist and ppm[P[i][1]]>ppm[P[j][1]]-dist) or (ppm[P[i][0]]<ppm[P[j][1]]+dist and ppm[P[i][0]]>ppm[P[j][1]]-dist and ppm[P[i][1]]<ppm[P[j][0]]+dist and ppm[P[i][1]]>ppm[P[j][0]]-dist):
+                #if M[P[i,0]][P[i,1]]>sig and M[P[j,0]][P[j,1]]>sig:
+                #v.append(np.array([ppm[P[i][0]],ppm[P[i][1]],M[P[i,0]][P[i,1]],ppm[P[j][0]],ppm[P[j][1]],M[P[j,0]][P[j,1]]]))
                 if M[P[i,0]][P[i,1]]>M[P[j,0]][P[j,1]]:
                     removing_similar[j]=0
                 else:
                     removing_similar[i]=0
-        
-            if (P[i][0]==P[j][1] and P[i][1]==P[j][0]): #add an or statement here for checking if any two pairs are within the dist threshold if yes the one with min correlation should be also eliminated
-                removing_similar[j]=0
-    output=pd.DataFrame(v)
-    output.to_csv('pairswoNeighboringSimilars.csv',index=False,header=None)
-    removing_similar=removing_similar>0
 
+    #output=pd.DataFrame(v)
+    #output.to_csv('pairswoNeighboringSimilars.csv',index=False,header=None)
+    removing_similar=removing_similar>0
     P=P[removing_similar]
     #output=pd.DataFrame(P)
     #output.to_csv('pairswosimilars.csv',index=False,header=None)
